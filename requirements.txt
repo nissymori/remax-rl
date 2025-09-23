@@ -1,0 +1,13 @@
+numpy
+jax
+jaxlib
+chex
+flax
+distrax
+optax
+pgx
+wandb
+pydantic
+omegaconf
+tqdm
+matplotlib
