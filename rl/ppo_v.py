@@ -1,6 +1,7 @@
-"""This PPO implementation is modified from PureJaxRL:
+"""This PPO implementation is modified from
 
-  https://github.com/luchris429/purejaxrl
+- PureJaxRL:https://github.com/luchris429/purejaxrl
+- pgx:https://github.com/sotetsuk/pgx/tree/main/examples/minatar-ppo
 
 Please refer to their work if you use this example in your research."""
 
