@@ -60,6 +60,7 @@ class AppConfig(BaseModel):
     eps_decay: float = 0.1  # ratio of total updates
 
     # evaluation
+    do_eval: bool = True
     num_eval_envs: int = 100
 
     # logging / misc
@@ -400,37 +401,35 @@ def train(rng):
     steps = 0
 
     # initial evaluation
-    et = time.time()  # exclude evaluation time
-    tt += et - st
-    rng, _rng = jax.random.split(rng)
-    eval_R = evaluate(runner_state[0], _rng)
-    log = {"sec": tt, f"{config.env_name}/eval_R": float(eval_R), "steps": steps}
-    print(log)
-    wandb.log(log)
     st = time.time()
+    if config.do_eval:
+        rng, _rng = jax.random.split(rng)
+        eval_R = evaluate(runner_state[0], _rng)
+        log = {f"{config.env_name}/eval_R": float(eval_R), "steps": steps}
+        print(log)
+        wandb.log(log)
 
     for i in range(config.num_updates):
         runner_state, metrics = jitted_update_step(runner_state)
         steps += config.num_envs * config.num_steps
-        log = {"sec": tt, "steps": steps, **metrics}
+        log = {"steps": steps, **metrics}
         wandb.log(log)
-        et = time.time()  # exclude evaluation time
-        tt += et - st
         # evaluation
-        if steps % 10 == 0:
+        if config.do_eval and steps % 10 == 0:
             rng, _rng = jax.random.split(rng)
             eval_R = evaluate(runner_state[0], _rng)
-            log = {"sec": tt, f"{config.env_name}/eval_R": float(eval_R), "steps": steps, **log}
+            log = {f"{config.env_name}/eval_R": float(eval_R), "steps": steps, **log}
             print(log)
             wandb.log(log)
-            st = time.time()
+    et = time.time()
+    wandb.log{"train_time": et - st}
+
     
     rng, _rng = jax.random.split(rng)
     eval_R = evaluate(runner_state[0], _rng)
-    log = {"sec": tt, f"{config.env_name}/eval_R": float(eval_R), "steps": steps, f"{config.env_name}/final_eval_R": float(eval_R)}
+    log = {f"{config.env_name}/eval_R": float(eval_R), "steps": steps, f"{config.env_name}/final_eval_R": float(eval_R)}
     print(log)
     wandb.log(log)
-    st = time.time()
 
     return runner_state
 

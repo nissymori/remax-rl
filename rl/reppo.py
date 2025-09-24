@@ -28,6 +28,7 @@ class REPPOConfig(BaseModel):
     lr: float = 0.0003
     decay_lr: bool = False
     num_envs: int = 1024
+    eval_every: int = 10
     num_eval_envs: int = 100
     num_steps: int = 128
     total_timesteps: int = 10000000
@@ -400,8 +401,6 @@ def evaluate(params, rng_key):
 
 
 def train(rng, args):
-    tt = 0
-    st = time.time()
     # INIT NETWORK
     rng, _rng = jax.random.split(rng)
     init_x = jnp.zeros((1, ) + env.observation_shape)
@@ -431,11 +430,9 @@ def train(rng, args):
     steps = 0
 
     # initial evaluation
-    et = time.time()  # exclude evaluation time
-    tt += et - st
     rng, _rng = jax.random.split(rng)
     eval_R = evaluate(runner_state[0], _rng)
-    log = {"sec": tt, f"{args.env_name}/eval_R": float(eval_R), "steps": steps}
+    log = {f"{args.env_name}/eval_R": float(eval_R), "steps": steps}
     print(log)
     if args.use_wandb:
         wandb.log(log)
@@ -446,7 +443,6 @@ def train(rng, args):
         steps += args.num_envs * args.num_steps
         total_loss, aux = loss_info
         log = {
-            "sec": tt,
             "steps": steps,
             "total_loss": float(total_loss.mean()),
             "value_loss": float(aux["value_loss"].mean()),
@@ -458,24 +454,23 @@ def train(rng, args):
         if args.use_wandb:
             wandb.log(log)
         # evaluation
-        et = time.time()  # exclude evaluation time
-        tt += et - st
-        if steps % 10 == 0:
+        if args.do_eval and steps % 10 == 0:
             rng, _rng = jax.random.split(rng)
             eval_R = evaluate(runner_state[0], _rng)
-            log = {"sec": tt, f"{args.env_name}/eval_R": float(eval_R), "steps": steps, **log}
+            log = {f"{args.env_name}/eval_R": float(eval_R), "steps": steps, **log}
             print(log)
             if args.use_wandb:
                 wandb.log(log)
-            st = time.time()
+
+    et = time.time()
+    wandb.log{"train_time": et - st}
 
     rng, _rng = jax.random.split(rng)
     eval_R = evaluate(runner_state[0], _rng)
-    log = {"sec": tt, f"{args.env_name}/eval_R": float(eval_R), "steps": steps, **log, f"{args.env_name}/final_eval_R": float(eval_R)}
+    log = {f"{args.env_name}/eval_R": float(eval_R), "steps": steps, **log, f"{args.env_name}/final_eval_R": float(eval_R)}
     print(log)
     if args.use_wandb:
         wandb.log(log)
-    st = time.time()
 
     return runner_state
 

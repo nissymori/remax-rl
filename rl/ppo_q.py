@@ -34,6 +34,7 @@ class PPOConfig(BaseModel):
     lr: float = 0.0003
     num_envs: int = 1024
     num_eval_envs: int = 100
+    do_eval: bool = True
     num_steps: int = 128
     total_timesteps: int = 10000000
     update_epochs: int = 3
@@ -321,8 +322,6 @@ def evaluate(params, rng_key):
 
 
 def train(rng):
-    tt = 0
-    st = time.time()
     # INIT NETWORK
     rng, _rng = jax.random.split(rng)
     init_x = jnp.zeros((1, ) + env.observation_shape)
@@ -348,21 +347,18 @@ def train(rng):
     steps = 0
 
     # initial evaluation
-    et = time.time()  # exclude evaluation time
-    tt += et - st
-    rng, _rng = jax.random.split(rng)
-    eval_R = evaluate(runner_state[0], _rng)
-    log = {"sec": tt, f"{args.env_name}/eval_R": float(eval_R), "steps": steps}
-    print(log)
-    wandb.log(log)
+    if args.do_eval:
+        rng, _rng = jax.random.split(rng)
+        eval_R = evaluate(runner_state[0], _rng)
+        log = {f"{args.env_name}/eval_R": float(eval_R), "steps": steps}
+        print(log)
+        wandb.log(log)
     st = time.time()
-
     for i in range(num_updates):
         runner_state, loss_info = jitted_update_step(runner_state)
         steps += args.num_envs * args.num_steps
         total_loss, aux = loss_info
         log = {
-            "sec": tt,
             "steps": steps,
             "total_loss": total_loss.mean(),
             "value_loss": aux["value_loss"].mean(),
@@ -371,22 +367,20 @@ def train(rng):
         }
         wandb.log(log)
         # evaluation
-        et = time.time()  # exclude evaluation time
-        tt += et - st
-        if steps % 10 == 0:
+        if args.do_eval and steps % 10 == 0:
             rng, _rng = jax.random.split(rng)
             eval_R = evaluate(runner_state[0], _rng)
-            log = {"sec": tt, f"{args.env_name}/eval_R": float(eval_R), "steps": steps}
+            log = {f"{args.env_name}/eval_R": float(eval_R), "steps": steps}
             print(log)
             wandb.log(log)
-            st = time.time()
+    et = time.time()
+    wandb.log{"train_time": et - st}
 
     rng, _rng = jax.random.split(rng)
     eval_R = evaluate(runner_state[0], _rng)
-    log = {"sec": tt, f"{args.env_name}/eval_R": float(eval_R), "steps": steps, f"{args.env_name}/final_eval_R": float(eval_R)}
+    log = {f"{args.env_name}/eval_R": float(eval_R), "steps": steps, f"{args.env_name}/final_eval_R": float(eval_R)}
     print(log)
     wandb.log(log)
-    st = time.time()
 
     return runner_state
 
