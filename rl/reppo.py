@@ -28,7 +28,7 @@ class REPPOConfig(BaseModel):
     lr: float = 0.0003
     decay_lr: bool = False
     num_envs: int = 1024
-    eval_every: int = 10
+    do_eval: bool = True
     num_eval_envs: int = 100
     num_steps: int = 128
     total_timesteps: int = 10000000
@@ -404,10 +404,7 @@ def train(rng, args):
     # INIT NETWORK
     rng, _rng = jax.random.split(rng)
     init_x = jnp.zeros((1, ) + env.observation_shape)
-    if args.separate_network_head:
-        network = ActorCriticSeparate(env.num_actions)
-    else:
-        network = ActorCritic(env.num_actions)
+    network = ActorCritic(env.num_actions)
 
     params = network.init(_rng, init_x)
     opt_state = optimizer.init(params=params)
@@ -463,7 +460,7 @@ def train(rng, args):
                 wandb.log(log)
 
     et = time.time()
-    wandb.log{"train_time": et - st}
+    wandb.log({"train_time": et - st})
 
     rng, _rng = jax.random.split(rng)
     eval_R = evaluate(runner_state[0], _rng)

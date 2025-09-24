@@ -346,6 +346,172 @@ class ThompsonGaussianLearner(GaussianLearner):
         samples = np.random.normal(self.posterior_mean, self.posterior_std)
         return np.argmax(samples, axis=1)
 
+import numpy as np
+from scipy.stats import norm
+
+
+def gaussian_expected_max_single(m, std):
+    # m is a vector of means
+    # std is the corresponding vector of stds
+    # Output: expected maximum matrix:
+    # Diagonal elements are the same as m
+    # Off-diagonal elements are E[max(x_i, x_j)] where x_i and x_j are
+    # independent Gaussian random variables with mean m_i and m_j and
+    # standard deviations std_i and std_j
+    # E[max(x_i, x_j)] = m_i * CDF((m_i - m_j) / sqrt(std_i^2 + std_j^2)) +
+    #                   m_j * CDF((m_j - m_i) / sqrt(std_i^2 + std_j^2)) +
+    #                   sqrt(std_i^2 + std_j^2) * PDF((m_i - m_j) / sqrt(std_i^2 + std_j^2))
+    # where CDF and PDF are the CDF and PDF of the standard normal distribution.
+
+    # Compute the difference between all pairs of means
+    m = m.reshape(1, -1)
+    std = std.reshape(1, -1)
+    m_diff = m - m.T
+    std_sum = np.sqrt(std**2 + std.T**2)
+    theta = std_sum.copy()  # for the last term in the expectation
+    # Set diagonal to 0, so that the diagonal elements are the same as m
+    # Note that norm.cdf(0) = 0.5, for m_diff=0
+    np.fill_diagonal(theta, 0)
+    m_diff /= std_sum
+    exp_max = m * norm.cdf(m_diff) + m.T * norm.cdf(-m_diff) + theta * norm.pdf(m_diff)
+
+    return exp_max
+
+
+def gaussian_expected_max(m, std):
+    # m is a vector of means
+    # std is the corresponding vector of stds
+    # Output: expected maximum matrix:
+    # Diagonal elements are the same as m
+    # Off-diagonal elements are E[max(x_i, x_j)] where x_i and x_j are
+    # independent Gaussian random variables with mean m_i and m_j and
+    # standard deviations std_i and std_j
+    # E[max(x_i, x_j)] = m_i * CDF((m_i - m_j) / sqrt(std_i^2 + std_j^2)) +
+    #                   m_j * CDF((m_j - m_i) / sqrt(std_i^2 + std_j^2)) +
+    #                   sqrt(std_i^2 + std_j^2) * PDF((m_i - m_j) / sqrt(std_i^2 + std_j^2))
+    # where CDF and PDF are the CDF and PDF of the standard normal distribution.
+
+    # Compute the difference between all pairs of means
+    if len(m.shape) == 1 or m.shape[0] == 1:
+        m = m.reshape(1, -1)
+        std = std.reshape(1, -1)
+        m_diff = m - m.T
+        std_sum = np.sqrt(std**2 + std.T**2)
+        theta = std_sum.copy()  # for the last term in the expectation
+        # Set diagonal to 0, so that the diagonal elements are the same as m
+        # Note that norm.cdf(0) = 0.5, for m_diff=0
+        np.fill_diagonal(theta, 0)
+        m_diff /= std_sum
+        exp_max = (
+            m * norm.cdf(m_diff) + m.T * norm.cdf(-m_diff) + theta * norm.pdf(m_diff)
+        )
+    elif len(m.shape) == 2:
+        m = np.expand_dims(m, axis=1)
+        std = np.expand_dims(std, axis=1)
+        m_diff = m - m.transpose((0, 2, 1))
+        std_sum = np.sqrt(std**2 + std.transpose((0, 2, 1)) ** 2)
+        theta = std_sum.copy()  # see comment in the previous case
+        for i in range(m.shape[0]):
+            np.fill_diagonal(theta[i, :, :], 0)
+        m_diff /= std_sum
+        exp_max = (
+            m * norm.cdf(m_diff)
+            + m.transpose((0, 2, 1)) * norm.cdf(-m_diff)
+            + theta * norm.pdf(m_diff)
+        )
+
+    return exp_max
+
+
+def batch_choice(p, u=None, sample_per_p=1):
+    # p is a matrix of probabilities [batch_size, num_arms]
+    # Output: a vector of indices [batch_size], chosen according to the
+    # probabilities in p
+    batch_size = p.shape[0]
+
+    if not isinstance(u, np.ndarray):
+        u = np.random.rand(batch_size, sample_per_p)
+
+    cumsum = np.cumsum(p, axis=1)
+
+    # Selects the index of first cumsum to be greater than u
+    choices = np.argmax(u < cumsum, axis=1)
+    return choices
+
+class ReMaxGaussianK2Learner(GaussianLearner):
+
+    def __init__(
+        self, batch_size: int, bandit: Type[Bandit], negative_fixing: bool = False
+    ):
+        super().__init__(batch_size, bandit)
+        self.negative_fixing = negative_fixing
+        self.probs = []
+
+    def select_arms(self):
+        # Selects the arms to pull
+        # Returns a vector of arms
+        # Compute the expected maximum
+        exp_max = gaussian_expected_max(self.posterior_mean, self.posterior_std)
+        # Compute the ReMax policy probabilities
+        p = self.compute_remax_policy(exp_max)
+
+        # Remove negative probabilities, and normalize to 1
+        # TODO: this should be checked, and seen whether a better solution
+        # exists, and whether the current approach for computing ReMax is correct
+        p = np.maximum(p, 0)
+
+        p = p / np.sum(p, axis=1, keepdims=True)
+
+        # Sample the arms from the ReMax policy
+        arms = batch_choice(p)
+        self.probs.append(p)
+        return arms
+
+    def compute_remax_policy(self, exp_max):
+        # Computes the ReMax policy probabilities by
+        # solving an equation of the form a @ p = b
+        b = exp_max[:, 0:1, 0] - exp_max[:, 1:, 0]  # was 0:1
+
+        a = (
+            exp_max[:, 1:, 1:]
+            + exp_max[:, 0:1, 0:1]
+            - exp_max[:, 1:, 0:1]
+            - exp_max[:, 0:1, 1:]
+        )
+
+        p = np.linalg.solve(a, b)
+
+        p = np.concatenate((1 - np.sum(p, axis=1, keepdims=True), p), axis=1)
+
+        # Loop through p, and fix negative probabilities
+        if self.negative_fixing:
+            for i in range(p.shape[0]):
+                counter = 0
+                if np.all(p[i, :] >= 0):
+                    continue
+                curr_p = p[i].copy()
+                idx = np.where(curr_p >= 0)[0]
+                prev_p = curr_p[idx]
+                while np.any(curr_p < 0):  # negative, so fix it
+                    counter += 1
+                    # indexes of non-negative probabilities
+                    idx = idx[np.where(prev_p >= 0)[0]]
+                    # select non-negative elements
+                    local_exp_max = exp_max[i, idx, :][:, idx]
+                    b_local = local_exp_max[0:1, 0] - local_exp_max[1:, 0]
+                    a_local = (
+                        local_exp_max[1:, 1:]
+                        + local_exp_max[0:1, 0:1]
+                        - local_exp_max[1:, 0:1]
+                        - local_exp_max[0:1, 1:]
+                    )
+                    p_local = np.linalg.solve(a_local, b_local)
+                    curr_p = np.concatenate(((1 - np.sum(p_local),), p_local))
+                    prev_p = curr_p
+                p[i, :] = 0
+                p[i, idx] = curr_p
+
+        return p
 
 # =============================================================
 # ReMax-EI (Exact inner objective + autodiff) — family-specific wrappers
@@ -360,7 +526,6 @@ class _ReMaxEIBase(_BaseLearner):
         self.M = int(M)
         self.pg_iter = int(pg_iter)
         self.policy = Policy(num_arms=self.num_arms, batch_size=self.batch_size)
-        self.optimizer = optim.Adam(self.policy.parameters(), lr=0.05)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.probs = []
 
@@ -393,10 +558,11 @@ class _ReMaxEIBase(_BaseLearner):
         raise NotImplementedError
 
     def _compute_pg_remax_policy(self, n_mu: int):
-        policy = self.policy.to(self.device)
+        policy = self.policy
+        optimizer = optim.Adam(policy.parameters(), lr=0.05)
         logits = None
         for _ in range(self.pg_iter):
-            self.optimizer.zero_grad()
+            optimizer.zero_grad()
             mu_samples = self._sample_mu_from_posterior(n_mu)      # (B,S,K)
             logits = policy()                                      # (B,K)
             pi = torch.softmax(logits, dim=1)                      # (B,K)
@@ -404,7 +570,7 @@ class _ReMaxEIBase(_BaseLearner):
             J = J_per_mu.mean(dim=1)                               # (B,)
             loss = -J.sum()
             loss.backward()
-            self.optimizer.step()
+            optimizer.step()
         probs = torch.softmax(logits, dim=1).detach().cpu().numpy() # (B,K)
         return probs
 
@@ -456,6 +622,7 @@ class ReMaxEIGaussianLearner(_ReMaxEIBase, GaussianLearner):
 def _plot(regret_history: np.ndarray, label: str):
     mean = np.mean(regret_history, axis=0)
     steps = np.arange(mean.shape[0])
+    std = np.std(regret_history, axis=0)
     stderr = np.std(regret_history, axis=0) / np.sqrt(regret_history.shape[0])
     plt.plot(steps, mean, label=label)
     plt.fill_between(steps, mean - stderr, mean + stderr, alpha=0.2)
@@ -476,8 +643,8 @@ def run_experiment(
     noise_std: float = 1.0,
     # ReMax-EI hyperparams
     remax_Ms: list[int] = [2, 3],
-    remax_pg_iter: int = 10,
-    remax_n_mu: int = 16,
+    remax_pg_iter: int = 5,
+    remax_n_mu: int = 50,
 ):
 
     if family == "beta":
@@ -533,22 +700,31 @@ def run_experiment(
         raise ValueError("family must be one of {'beta','gaussian'}")
 
     os.makedirs("fig", exist_ok=True)
-    fig, ax = plt.subplots(figsize=(7, 4))
+    fig, ax = plt.subplots(figsize=(8, 4))
+    last_regrets = []
     for i, (name, learner) in enumerate(learners.items()):
         learner.learn(num_pulls)
-        print(f"Learner {name} done")
+        print(f"Learner {name} done with last regret {learner.regret_history[:, -1].mean()}")
+        last_regrets.append(learner.regret_history[:, -1].mean())
         _plot(learner.regret_history, name)
 
-    if family == "beta":
-        yticks = [0, 20, 40]
-    else:
-        yticks = [0, 40, 80]
 
-    plt.legend(fontsize=15)
-    plt.xticks([0, 250, 500], fontsize=20)
+    # last_regretのmaxに一番近い10の倍数
+    max_last_regret = max(last_regrets)
+    max_y_tick = np.ceil(max_last_regret / 10) * 10
+    if (max_y_tick // 10) % 2 != 0:
+        max_y_tick += 10
+    yticks = [0, max_y_tick/2, max_y_tick]
+
+    if family == "beta":
+        plt.legend(fontsize=15)
+    else:
+        #plt.legend(fontsize=15, loc="lower center", bbox_to_anchor=(0.5, 1.05), ncol=5, frameon=False)
+        pass
+    plt.xticks([0, num_pulls/2, num_pulls], fontsize=20)
     plt.yticks(yticks, fontsize=20)
-    plt.xlabel("Number of pulls", fontsize=25)
-    plt.ylabel("Regret", fontsize=25)
+    plt.xlabel("Round(t)", fontsize=25)
+    plt.ylabel("Cumulative Regret", fontsize=25)
     plt.title(title, fontsize=25)
     plt.tight_layout()
     plt.savefig(outfile, bbox_inches="tight", format="pdf")
@@ -558,7 +734,7 @@ def run_experiment(
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--family", type=str, default="beta", choices=["beta", "gaussian"])
-    parser.add_argument("--num_pulls", type=int, default=500)
+    parser.add_argument("--num_pulls", type=int, default=1000)
     parser.add_argument("--num_bandit_instances", type=int, default=256)
     parser.add_argument("--num_arms", type=int, default=10)
     parser.add_argument("--ucb_c", type=float, default=1.0)
@@ -573,8 +749,8 @@ def main():
     parser.add_argument("--noise_std", type=float, default=1.0)
 
     # ReMax-EI
-    parser.add_argument("--remax_Ms", type=int, nargs="+", default=[2, 3, 4])
-    parser.add_argument("--remax_pg_iter", type=int, default=20)
+    parser.add_argument("--remax_Ms", type=int, nargs="+", default=[2, 3])
+    parser.add_argument("--remax_pg_iter", type=int, default=50)
     parser.add_argument("--remax_n_mu", type=int, default=16)
 
     args = parser.parse_args()
