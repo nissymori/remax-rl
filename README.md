@@ -10,7 +10,7 @@ python bandit/plot_binary_bandit.py
 
 Bernoulli bandit plot:
 ```bash
-python bandit/plot_bernoulli_bandit.py
+python bandit/plot_bernoulli_bandit_curve.py
 ```
 
 Fixed binary bandit plot:
