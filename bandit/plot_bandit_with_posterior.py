@@ -346,6 +346,33 @@ class ThompsonGaussianLearner(GaussianLearner):
         samples = np.random.normal(self.posterior_mean, self.posterior_std)
         return np.argmax(samples, axis=1)
 
+
+class SoftmaxGaussianLearner(GaussianLearner):
+    def __init__(self, batch_size: int, bandit: GaussianBandit, prior_mean: float = 0.0, prior_std: float = 1.0, temperature: float = 1.0):
+        GaussianLearner.__init__(self, batch_size, bandit, prior_mean=prior_mean, prior_std=prior_std)
+        self.temperature = temperature
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    def select_arms(self):
+        posterior_mean = torch.as_tensor(self.posterior_mean, dtype=torch.float32, device=self.device) # (B,K)
+        softmax_probs = torch.softmax(posterior_mean / self.temperature, dim=1) # (B,K)
+        return batch_choice(softmax_probs.detach().cpu().numpy())
+
+
+class SoftmaxBetaLearner(BernoulliLearner):
+    def __init__(self, batch_size: int, bandit: BernoulliBandit, prior_alpha: float = 1.0, prior_beta: float = 1.0, temperature: float = 1.0):
+        BernoulliLearner.__init__(self, batch_size, bandit, prior_alpha=prior_alpha, prior_beta=prior_beta)
+        self.temperature = temperature
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    def select_arms(self):
+        posterior_alpha = torch.as_tensor(self.posterior_alpha, dtype=torch.float32, device=self.device) # (B,K)
+        posterior_beta = torch.as_tensor(self.posterior_beta, dtype=torch.float32, device=self.device) # (B,K)
+        posterior_mean = posterior_alpha / (posterior_alpha + posterior_beta)
+        softmax_probs = torch.softmax(posterior_mean / self.temperature, dim=1) # (B,K)
+        return batch_choice(softmax_probs.detach().cpu().numpy())
+
+
 import numpy as np
 from scipy.stats import norm
 
@@ -619,13 +646,66 @@ class ReMaxEIGaussianLearner(_ReMaxEIBase, GaussianLearner):
 # Experiment driver
 # =============================================================
 
+# ---- Plot style ----
+line_width: float = 1.8
+line_alpha: float = 0.85
+fill_alpha: float = 0.18
+grid_alpha: float = 0.25
+marker_interval_ratio: float = 0.1
+
+# LaTeX-consistent fonts (Computer Modern via mathtext; no system TeX required)
+plt.rcParams.update({
+    "font.family": "serif",
+    "font.serif": ["cmr10", "Computer Modern Roman", "DejaVu Serif"],
+    "mathtext.fontset": "cm",
+    "mathtext.rm": "serif",
+    "axes.formatter.use_mathtext": True,
+    "axes.unicode_minus": False,
+    "pdf.fonttype": 42,
+    "ps.fonttype": 42,
+})
+
+# tab10 palette assignment per method (consistent across plots)
+# tab10 indices: 0 blue, 1 orange, 2 green, 3 red, 4 purple,
+#                5 brown, 6 pink, 7 gray, 8 olive, 9 cyan
+_TAB_PALETTE = plt.get_cmap("tab10").colors
+METHOD_STYLE = {
+    "Softmax": {"color": _TAB_PALETTE[7], "marker": "*", "label": r"$\mathrm{Softmax}$"},
+    "TS":      {"color": _TAB_PALETTE[0], "marker": "o", "label": r"$\mathrm{TS}$"},
+    "UCB":     {"color": _TAB_PALETTE[1], "marker": "s", "label": r"$\mathrm{UCB}$"},
+    "M=2":     {"color": _TAB_PALETTE[2], "marker": "^", "label": r"$M=2$"},
+    "M=3":     {"color": _TAB_PALETTE[3], "marker": "D", "label": r"$M=3$"},
+    "M=4":     {"color": _TAB_PALETTE[4], "marker": "v", "label": r"$M=4$"},
+    "M=5":     {"color": _TAB_PALETTE[5], "marker": "P", "label": r"$M=5$"},
+    "M=6":     {"color": _TAB_PALETTE[6], "marker": "X", "label": r"$M=6$"},
+    "M=7":     {"color": _TAB_PALETTE[8], "marker": "h", "label": r"$M=7$"},
+    "M=8":     {"color": _TAB_PALETTE[9], "marker": "p", "label": r"$M=8$"},
+    "M=9":     {"color": "tab:olive",      "marker": "d", "label": r"$M=9$"},
+}
+
+
 def _plot(regret_history: np.ndarray, label: str):
     mean = np.mean(regret_history, axis=0)
     steps = np.arange(mean.shape[0])
-    std = np.std(regret_history, axis=0)
     stderr = np.std(regret_history, axis=0) / np.sqrt(regret_history.shape[0])
-    plt.plot(steps, mean, label=label)
-    plt.fill_between(steps, mean - stderr, mean + stderr, alpha=0.2)
+
+    style = METHOD_STYLE.get(label, {"color": None, "marker": None, "label": label})
+    color = style["color"]
+    marker = style["marker"]
+    display_label = style.get("label", label)
+    markevery = max(int(mean.shape[0] * marker_interval_ratio), 1)
+
+    plt.plot(
+        steps,
+        mean,
+        label=display_label,
+        color=color,
+        marker=marker,
+        markevery=markevery,
+        linewidth=line_width,
+        alpha=line_alpha,
+    )
+    plt.fill_between(steps, mean - stderr, mean + stderr, color=color, alpha=fill_alpha, linewidth=0)
 
 
 def run_experiment(
@@ -634,6 +714,7 @@ def run_experiment(
     num_bandit_instances: int = 256,
     num_arms: int = 10,
     ucb_c: float = 1.0,
+    softmax_temperature: float = 1.0,
     # Beta priors
     prior_alpha: float = 1.0,
     prior_beta: float = 1.0,
@@ -655,18 +736,22 @@ def run_experiment(
             prior_beta=prior_beta,
         )
         learners = {
+            "Softmax": SoftmaxBetaLearner(
+                num_bandit_instances, bandit, prior_alpha=prior_alpha, prior_beta=prior_beta,
+                temperature=softmax_temperature,
+            ),
             "TS": ThompsonBetaLearner(
                 num_bandit_instances, bandit, prior_alpha=prior_alpha, prior_beta=prior_beta
+            ),
+            "UCB": UCB1BernoulliLearner(
+                num_bandit_instances, bandit, c=ucb_c, prior_alpha=prior_alpha, prior_beta=prior_beta
             ),
             **{f"M={remax_M}": ReMaxEIBetaLearner(
                 num_bandit_instances, bandit, M=remax_M, pg_iter=remax_pg_iter,
                 n_mu=remax_n_mu, prior_alpha=prior_alpha, prior_beta=prior_beta
             ) for remax_M in remax_Ms},
-            "UCB": UCB1BernoulliLearner(
-                num_bandit_instances, bandit, c=ucb_c, prior_alpha=prior_alpha, prior_beta=prior_beta
-            ),
         }
-        title = f"Beta-Bernoulli"
+        title = r"(A) Beta--Bernoulli"
         outfile = f"fig/regret_beta_instances_{num_bandit_instances}_K_{num_arms}_a{prior_alpha}_b{prior_beta}.pdf"
 
     elif family == "gaussian":
@@ -678,20 +763,22 @@ def run_experiment(
             noise_std=noise_std,
         )
         learners = {
+            "Softmax": SoftmaxGaussianLearner(
+                num_bandit_instances, bandit, prior_mean=prior_mean, prior_std=prior_std,
+                temperature=softmax_temperature,
+            ),
             "TS": ThompsonGaussianLearner(
                 num_bandit_instances, bandit, prior_mean=prior_mean, prior_std=prior_std
+            ),
+            "UCB": UCB1GaussianLearner(
+                num_bandit_instances, bandit, c=ucb_c, prior_mean=prior_mean, prior_std=prior_std
             ),
             **{f"M={remax_M}": ReMaxEIGaussianLearner(
                 num_bandit_instances, bandit, M=remax_M, pg_iter=remax_pg_iter,
                 n_mu=remax_n_mu, prior_mean=prior_mean, prior_std=prior_std
             ) for remax_M in remax_Ms},
-            "UCB": UCB1GaussianLearner(
-                num_bandit_instances, bandit, c=ucb_c, prior_mean=prior_mean, prior_std=prior_std
-            ),
         }
-        title = (
-            f"Gaussian-Gaussian"
-        )
+        title = r"(B) Gaussian--Gaussian"
         outfile = (
             f"fig/regret_gaussian_instances_{num_bandit_instances}_K_{num_arms}_pm{prior_mean}_ps{prior_std}_"
             f"noise{noise_std}.pdf"
@@ -700,7 +787,7 @@ def run_experiment(
         raise ValueError("family must be one of {'beta','gaussian'}")
 
     os.makedirs("fig", exist_ok=True)
-    fig, ax = plt.subplots(figsize=(8, 4))
+    fig, ax = plt.subplots(figsize=(6.5, 4))
     last_regrets = []
     for i, (name, learner) in enumerate(learners.items()):
         learner.learn(num_pulls)
@@ -715,17 +802,14 @@ def run_experiment(
     if (max_y_tick // 10) % 2 != 0:
         max_y_tick += 10
     yticks = [0, max_y_tick/2, max_y_tick]
+    plt.legend(fontsize=15)
 
-    if family == "beta":
-        plt.legend(fontsize=15)
-    else:
-        #plt.legend(fontsize=15, loc="lower center", bbox_to_anchor=(0.5, 1.05), ncol=5, frameon=False)
-        pass
     plt.xticks([0, num_pulls/2, num_pulls], fontsize=20)
     plt.yticks(yticks, fontsize=20)
-    plt.xlabel("Round(t)", fontsize=25)
-    plt.ylabel("Cumulative Regret", fontsize=25)
-    plt.title(title, fontsize=25)
+    plt.xlabel(r"Round $t$", fontsize=22)
+    plt.ylabel(r"Cumulative Regret", fontsize=22)
+    plt.title(title, fontsize=22)
+    plt.grid(True, alpha=grid_alpha)
     plt.tight_layout()
     plt.savefig(outfile, bbox_inches="tight", format="pdf")
     print("Saved:", outfile)
@@ -738,6 +822,7 @@ def main():
     parser.add_argument("--num_bandit_instances", type=int, default=256)
     parser.add_argument("--num_arms", type=int, default=10)
     parser.add_argument("--ucb_c", type=float, default=1.0)
+    parser.add_argument("--softmax_temperature", type=float, default=0.1)
 
     # Beta
     parser.add_argument("--prior_alpha", type=float, default=1.0)
@@ -761,6 +846,7 @@ def main():
         num_bandit_instances=args.num_bandit_instances,
         num_arms=args.num_arms,
         ucb_c=args.ucb_c,
+        softmax_temperature=args.softmax_temperature,
         prior_alpha=args.prior_alpha,
         prior_beta=args.prior_beta,
         prior_mean=args.prior_mean,
