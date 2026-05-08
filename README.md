@@ -1,4 +1,4 @@
-# The Official Implementation of "Emergence of Exploration in Policy Gradient Reinforcement Learning via Retrying".
+# Emergence of Exploration in Policy Gradient Reinforcement Learning via Retrying".
 
 ## Bandit Experiments
 In `bandit/`, we implement the bandit experiments in the paper.
