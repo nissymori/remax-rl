@@ -11,7 +11,7 @@ From this perspective, we argue that exploration matters because we are $\color{
 - If the returns were known perfectly, the problem would reduce to pure optimization.
 - Likewise, if no retry were allowed, the only rational choice would be the action currently believed to be best (e.g., what would you choose for your last supper?).
 
-We instantiate this intuition as an objective for RL, which we call **ReMax**, where we assume $\color{#C44E52}{\text{distribution over the return}}$ and measure the $\color{#4678C8}{\textbf{best of $M$ retries}}$.
+We instantiate this intuition as an objective for RL, which we call **ReMax**, where we assume $\color{#C44E52}{\text{distribution over the return}}$ and measure the $\color{#4678C8}{\textbf{best of M retries}}$.
 
 ReMax adaptively explores to the uncertainty and its intensity can be controlled by the number of retries $M$.
 
