@@ -13,7 +13,13 @@ We argue that exploration matters because we are $\color{#C44E52}{\text{uncertai
 
 We instantiate this intuition as an objective for RL, which we call **ReMax**, where we assume $\color{#C44E52}{\text{distribution over the return}}$ and measure the $\color{#4678C8}{\textbf{best of M retries}}$.
 
-ReMax adaptively explores to the uncertainty and its intensity can be controlled by the number of retries $M$.
+## Contents
+- [bandit/](./bandit/): Code for illustrative bandit experiments.
+- [agents/](./agents/): Implementations of the RL agents in [MinAtar](https://github.com/openai/minatar), [Atari](https://github.com/openai/atari-py), and [Craftax](https://github.com/craftax/craftax).
+
+Especially, all the RL are implemented as **single-file JAX code**, easy to understand and modify and fast.
+Our method, **Re**Max **PPO** (RePPO) is implemented with the file name `reppo.py` at each environment directory.
+
 
 ## Setup
 Please make sure you have installed proper GPU compatible JAX in your environment.
