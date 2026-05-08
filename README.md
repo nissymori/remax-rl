@@ -15,7 +15,7 @@ We instantiate this intuition as an objective for RL, which we call **ReMax**, w
 
 ## Contents
 - [bandit/](./bandit/): Code for illustrative bandit experiments.
-- [agents/](./agents/): Implementations of the RL agents in [MinAtar](https://github.com/openai/minatar), [Atari](https://github.com/openai/atari-py), and [Craftax](https://github.com/craftax/craftax).
+- [agents/](./agents/): RL code for [MinAtar](https://github.com/openai/minatar), [Atari](https://github.com/openai/atari-py), and [Craftax](https://github.com/craftax/craftax).
 
 Especially, all the RL are implemented as **single-file JAX code**, easy to understand and modify and fast.
 Our method, **Re**Max **PPO** (RePPO) is implemented with the file name `reppo.py` at each environment directory.
