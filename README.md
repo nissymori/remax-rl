@@ -1,4 +1,4 @@
-# Emergence of Exploration in Policy Gradient Reinforcement Learning via Retrying".
+# Emergence of Exploration in Policy Gradient Reinforcement Learning via Retrying (ReMax)
 
 
 
@@ -34,9 +34,12 @@ python bandit/plot_bandit_with_posterior.py --family gaussian # for Gaussian-Gau
 
 ### RL Experiments
 In [`agents/`](./agents/), we implement the RL experiments in the paper.
+You can run the experiments by running files in [`sh/`](./sh/).
 
-The main experiments:
+At `sh/`
 ```bash
-python rl/run.sh
+./run_minatar.sh  # for MinAtar
+./run_atari.sh  # for Atari
+./run_craftax.sh  # for CraftAX
 ```
 
