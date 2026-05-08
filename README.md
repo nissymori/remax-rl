@@ -2,7 +2,7 @@
 
 
 <p align="center">
-  <img src="assets/math.svg" alt="ReMax objective" />
+  <img src="docs/math.svg" alt="ReMax objective" />
 </p>
 
 
