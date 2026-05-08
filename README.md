@@ -34,7 +34,7 @@ For Atari, for the compatibility to the envpool, we recommend to build the docke
 ## Reproduce the results in the paper
 
 ### Bandit Experiments
-In `bandit/`, we implement the bandit experiments in the paper.
+In [bandit/](./bandit/), we implement the bandit experiments in the paper.
 
 
 ```bash
