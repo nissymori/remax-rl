@@ -1,5 +1,5 @@
 """
-This code is copied and modified from https://github.com/mttga/purejaxql
+This code is copied and adapted from https://github.com/mttga/purejaxql
 """
 
 import copy
@@ -36,7 +36,7 @@ class AppConfig(BaseModel):
 
     # training sizes
     total_timesteps: float = 1e7
-    total_timesteps_decay: float = 1e7  # decay基準に使う（短縮実験でも同じ比率保つ用）
+    total_timesteps_decay: float = 1e7
     num_envs: int = 128
     num_steps: int = 32
 
@@ -64,7 +64,7 @@ class AppConfig(BaseModel):
     num_eval_envs: int = 100
 
     # logging / misc
-    wandb_project: str = "pgx-minatar-pqn"
+    wandb_project: str = "project-name"
     entity: str = "default"
     wandb_mode: str = "online"
     save_model: bool = False
@@ -440,4 +440,3 @@ if __name__ == "__main__":
     if config.save_model:
         with open(f"{config.env_name}-seed={config.seed}.ckpt", "wb") as f:
             pickle.dump(out[0], f)
-    

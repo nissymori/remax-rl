@@ -3,7 +3,7 @@
 - PureJaxRL:https://github.com/luchris429/purejaxrl
 - pgx:https://github.com/sotetsuk/pgx/tree/main/examples/minatar-ppo
 
-Please refer to their work if you use this example in your research."""
+"""
 
 import sys
 import jax
@@ -45,7 +45,7 @@ class PPOConfig(BaseModel):
     ent_coef: float = 0.01
     vf_coef: float = 0.5
     max_grad_norm: float = 0.5
-    wandb_project: str = "pgx-minatar-ppo"
+    wandb_project: str = "project-name"
     save_model: bool = False
     algo: str = "ppo_q"
 
