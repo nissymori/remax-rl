@@ -57,4 +57,3 @@ At `sh/`
 ./run_atari.sh  # for Atari
 ./run_craftax.sh  # for Craftax
 ```
-
