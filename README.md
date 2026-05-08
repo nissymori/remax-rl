@@ -20,7 +20,8 @@ python bandit/plot_fixed_binary_bandit.py
 
 Regret plot:
 ```bash
-python bandit/plot_bandit_with_posterior.py
+python bandit/plot_bandit_with_posterior.py --family beta  # for Beta-Bernoulli
+python bandit/plot_bandit_with_posterior.py --family gaussian # for Gaussian-Gaussian
 ```
 
 ## RL Experiments

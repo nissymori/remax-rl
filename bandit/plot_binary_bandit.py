@@ -9,8 +9,6 @@ import numpy as np
 from scipy.ndimage import gaussian_filter1d
 
 
-
-
 class BanditConfig(BaseModel):
     # General parameters
     project: str = "remax-bandit"
@@ -41,6 +39,18 @@ def opt_remax_bias_exact(bias_prob, K, num_points=201):
 
 os.makedirs("fig", exist_ok=True)
 
+# LaTeX-consistent fonts (Computer Modern via mathtext; no system TeX required)
+plt.rcParams.update({
+    "font.family": "serif",
+    "font.serif": ["cmr10", "Computer Modern Roman", "DejaVu Serif"],
+    "mathtext.fontset": "cm",
+    "mathtext.rm": "serif",
+    "axes.formatter.use_mathtext": True,
+    "axes.unicode_minus": False,
+    "pdf.fonttype": 42,
+    "ps.fonttype": 42,
+})
+
 plt.figure(figsize=(8,4))
 for i, K in enumerate([1, 2, 3, 4, 5]):
     prob = np.linspace(0.0, 1.0, 101)
@@ -48,31 +58,33 @@ for i, K in enumerate([1, 2, 3, 4, 5]):
     print("K", opt_prob, max(max_rewards))
 
 
-    # seabornの色パレットを利用
-    plt.plot(prob, max_rewards, label=f"M={K}", alpha=0.75, linewidth=8)
+    if K == 1:
+        plt.plot(prob, max_rewards, label=f"M={K}", alpha=0.75, linewidth=8)
+    else:
+        plt.plot(prob, max_rewards, label=f"{K}", alpha=0.75, linewidth=8)
 
-    # 最適点をドットで
+    # optimal point
     plt.scatter(opt_prob, max(max_rewards), edgecolors="black",
                 s=300, zorder=3)
 
-# --- legend を上に横並びで、枠なし ---
+
 plt.legend(
-    fontsize=17,
+    fontsize=32,
     loc="lower center",
-    bbox_to_anchor=(0.5, 1.05),  # 上に少し出す
+    bbox_to_anchor=(0.5, 1.05),  # slightly above
     ncol=5,
-    frameon=False
+    frameon=False,
+    columnspacing=0.5,
+    handlelength=0.6
 )
 
-# --- 軸の枠を左と下だけ残す ---
 ax = plt.gca()
 ax.spines["right"].set_visible(False)
 ax.spines["top"].set_visible(False)
 
 plt.yticks([0.3, 0.7, 1.0], fontsize=25)
 plt.xticks([0.0, 0.5, 1.0], fontsize=25)
-plt.xlabel("Prob(a=1)", fontsize=40)
-plt.ylabel(r"$J_M$", fontsize=40)
+plt.xlabel("P(a=1)", fontsize=40)
+plt.ylabel(r"$J^M_{\mathrm{ReMax}}$", fontsize=40)
 plt.savefig("fig/remax_return_for_different_M.pdf", dpi=300, bbox_inches="tight")
 plt.close()
-
