@@ -4,35 +4,13 @@
 
 ## ReMax objective
 
-Exploration is a behavior of taking actions that we think is the most promising, expecting the higher return.
-In this perspective, we argue that exploration matters because we are $\textcolor{softred}{uncertain}$ about the return and are allowed to $\textcolor{softblue}{retry}$.
+Exploration is the behavior of trying actions that we believe may be promising, in expectation of higher returns.
+From this perspective, we argue that exploration matters because we are $\color{#C44E52}{\textsf{uncertain}}$ about the return and are allowed to $\color{#4678C8}{\textsf{retry}}$.
 
-If we are perfectly knowledgeable about the return, it is just an pure optimization problem.
-Also, if we are not allowed to retry, only the rational choice is the best action we think so far (e.g. what should be you last supper?).
+If the returns were known perfectly, the problem would reduce to pure optimization.
+Likewise, if no retry were allowed, the only rational choice would be the action currently believed to be best (e.g., what would you choose for your last supper?).
+We instantiate this intuition as an objective for RL, which we call **ReMax**.
 
-We instanciate this intuition into the objective function of RL, we call **ReMax**.
-
-
-$$
-\begin{aligned}
-J_{\mathrm{RL}}(\pi)
-&=
-\mathbb{E}_{A\sim\pi}[\mu_A]
-\\[1.2em]
-J_{\mathrm{ReMax}}^{M}(\pi)
-&=
-\underbrace{\mathbb{E}_{\color{softred}{\mu\sim\Pi}}}_{\text{uncertainty}}
-\left[
-\underbrace{
-\mathbb{E}_{\color{softblue}{A_1,\dots,A_M\sim\pi}}
-\left[
-\textcolor{softblue}{\max_{m\in[M]} \mu_{A_m}}
-\,\middle|\, \mu
-\right]
-}_{\text{best of $M$ retries}}
-\right]
-\end{aligned}
-$$
 
 ## Setup
 Please make sure you have installed proper GPU compatible JAX in your environment.
