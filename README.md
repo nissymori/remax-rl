@@ -5,7 +5,7 @@
 ## ReMax objective
 
 Exploration is the behavior of trying actions that we believe may be promising, in expectation of higher returns.
-From this perspective, we argue that exploration matters because we are $\color{#C44E52}{\textsf{uncertain}}$ about the return and are allowed to $\color{#4678C8}{\textsf{retry}}$.
+From this perspective, we argue that exploration matters because we are $\color{#C44E52}{\text{uncertain}}$ about the return and are allowed to $\color{#4678C8}{\textbf{retry}}$.
 
 If the returns were known perfectly, the problem would reduce to pure optimization.
 Likewise, if no retry were allowed, the only rational choice would be the action currently believed to be best (e.g., what would you choose for your last supper?).
