@@ -6,8 +6,6 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "numpy",
-    "jax",
-    "jaxlib",
     "chex",
     "flax",
     "distrax",
