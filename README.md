@@ -19,7 +19,7 @@ Please make sure you have installed proper GPU compatible JAX in your environmen
 uv sync
 ```
 
-For Atari, for the compatibility to the envpool, we recommend to build the docker image with [Dockerfile](./agents/atari/Dockerfile).
+For Atari, for the compatibility to the envpool, we recommend to build the docker image with [agints/atari/Dockerfile](./agents/atari/Dockerfile).
 
 
 ## Reproduce the results in the paper
