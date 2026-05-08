@@ -1,0 +1,54 @@
+\documentclass[border=10pt]{standalone}
+\usepackage{amsmath,amssymb}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{varwidth}
+\usepackage{bm}
+\boldmath
+\usepackage{bm}
+\boldmath
+
+% --- color definitions ---
+\definecolor{softred}{RGB}{196,78,82}
+\definecolor{softblue}{RGB}{70,120,200}
+\definecolor{softgray}{RGB}{70,70,70}
+
+\begin{document}
+\begin{varwidth}{26cm}
+
+\begin{center}
+{\Huge\bfseries RL vs.\ ReMax}
+\end{center}
+
+\vspace{0.8em}
+
+\vspace{1.2em}
+
+\[
+\begin{array}{c@{\hspace{3em}}c@{\hspace{3em}}c}
+\text{\Large\bfseries Standard RL}
+&
+&
+\text{\Large\bfseries ReMax}
+\\[1.0em]
+\displaystyle
+J_{\mathrm{RL}}(\pi)
+=
+\mathbb{E}_{A\sim\pi}[\mathcal{R}(a)]
+&
+\text{\Large\color{softgray}$\Longrightarrow$}
+&
+\displaystyle
+J_{\mathrm{ReMax}}^M(\pi)
+=
+\mathbb{E}_{\textcolor{softred}{\mathcal{R}\sim\Pi}}
+\left[
+\mathbb{E}_{\textcolor{softblue}{a_1,\ldots,a_M\sim\pi}}
+\left[
+\textcolor{softblue}{\max_{m\in[M]}} \mathcal{R}(a_m)
+\right]
+\right]
+\end{array}
+\]
+
+\end{varwidth}
+\end{document}

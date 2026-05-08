@@ -1,9 +1,6 @@
 # Emergence of Exploration in Policy Gradient Reinforcement Learning via Retrying (ReMax)
 
 
-
-## ReMax objective
-
 <p align="center">
   <img src="assets/math.svg" alt="ReMax objective" />
 </p>
@@ -11,10 +8,12 @@
 **Exploration** is the behavior of trying actions that we believe may be promising, in expectation of higher returns.
 From this perspective, we argue that exploration matters because we are $\color{#C44E52}{\text{uncertain}}$ about the return and are allowed to $\color{#4678C8}{\textbf{retry}}$.
 
-If the returns were known perfectly, the problem would reduce to pure optimization.
-Likewise, if no retry were allowed, the only rational choice would be the action currently believed to be best (e.g., what would you choose for your last supper?).
-We instantiate this intuition as an objective for RL, which we call **ReMax**.
+- If the returns were known perfectly, the problem would reduce to pure optimization.
+- Likewise, if no retry were allowed, the only rational choice would be the action currently believed to be best (e.g., what would you choose for your last supper?).
 
+We instantiate this intuition as an objective for RL, which we call **ReMax**, where we assume $\color{#C44E52}{\text{distribution over the return}}$ and measure the $\color{#4678C8}{\textbf{best of $M$ retries}}$.
+
+ReMax adaptively explores to the uncertainty and its intensity can be controlled by the number of retries $M$.
 
 ## Setup
 Please make sure you have installed proper GPU compatible JAX in your environment.
