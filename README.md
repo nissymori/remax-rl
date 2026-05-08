@@ -46,6 +46,6 @@ At `sh/`
 ```bash
 ./run_minatar.sh  # for MinAtar
 ./run_atari.sh  # for Atari
-./run_craftax.sh  # for CraftAX
+./run_craftax.sh  # for Craftax
 ```
 
