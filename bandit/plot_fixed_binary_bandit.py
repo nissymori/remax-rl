@@ -36,13 +36,13 @@ def main():
     plt.legend(
         fontsize=30,
         loc="lower center",
-        bbox_to_anchor=(0.5, 1.05),  # 上に少し出す
+        bbox_to_anchor=(0.5, 1.05),  # slightly above
         ncol=5,
         frameon=False,
         columnspacing=0.5,
         handlelength=0.6
     )
-    # --- 軸の枠を左と下だけ残す ---
+
     ax = plt.gca()
     ax.spines["right"].set_visible(False)
     ax.spines["top"].set_visible(False)
