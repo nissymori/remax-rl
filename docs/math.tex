@@ -1,4 +1,4 @@
-\documentclass[border=10pt]{standalone}
+\documentclass[border=0pt]{standalone}
 \usepackage{amsmath,amssymb}
 \usepackage[dvipsnames]{xcolor}
 \usepackage{varwidth}
@@ -13,6 +13,8 @@
 \definecolor{softgray}{RGB}{70,70,70}
 
 \begin{document}
+\setlength{\fboxsep}{10pt}
+\colorbox{white}{%
 \begin{varwidth}{30cm}
 
 \noindent
@@ -50,5 +52,6 @@ J_{\mathrm{ReMax}}^M(\pi)
 $
 }
 
-\end{varwidth}
+\end{varwidth}%
+}
 \end{document}
