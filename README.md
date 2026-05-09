@@ -51,8 +51,8 @@ python plot_bandit_with_posterior.py --family gaussian # for Gaussian-Gaussian r
 
 ### RL Experiments
 In [`agents/`](./agents/), we implement the algorithms used in the paper.
-- [`minatar/`](./agents/minatar/): MinAtar experiments, based on [pgx](https://github.com/sotetsuk/pgx).
-- [`atari/`](./agents/atari/): Atari experiments.
+- [`minatar/`](./agents/minatar/): MinAtar experiments, using [pgx](https://github.com/sotetsuk/pgx) implementation.
+- [`atari/`](./agents/atari/): Atari experiments (based on [purejaxql](https://github.com/mttga/purejaxql)).
 - [`craftax/`](./agents/craftax/): [Craftax](https://github.com/craftax/craftax) experiments.
 
 
