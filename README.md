@@ -1,4 +1,6 @@
-# Emergence of Exploration in Policy Gradient Reinforcement Learning via Retrying (ReMax)
+# ReMax RL
+
+This is the official implementation of the paper Emergence of Exploration in Policy Gradient Reinforcement Learning via Retrying.
 
 
 <p align="center">
@@ -8,10 +10,10 @@
 
 We argue that exploration matters because we are $\color{#C44E52}{\text{uncertain}}$ about the return and are allowed to $\color{#4678C8}{\textbf{retry}}$.
 
-- If no uncertainty, the problem would reduce to pure optimization.
-- If no retry, we should choose the current best action.
+- If no $\color{#C44E52}{\text{uncertainty}}$, the problem would reduce to pure optimization.
+- If no chance to $\color{#4678C8}{\textbf{retry}}$, only rational action is the current best.
 
-We instantiate this intuition as an objective for RL, which we call **ReMax**, where we assume $\color{#C44E52}{\text{distribution over the return}}$ and measure the $\color{#4678C8}{\textbf{best of M retries}}$.
+We turn this intuition into an objective for RL, **ReMax**, where we assume $\color{#C44E52}{\text{distribution over the return}}$ and measure the $\color{#4678C8}{\textbf{best of M retries}}$.
 
 ## Contents
 - [bandit/](./bandit/): Code for illustrative bandit experiments.
@@ -34,7 +36,7 @@ For Atari, for the compatibility to the envpool, we recommend to build the docke
 ## Reproduce the results in the paper
 
 ### Bandit Experiments
-In [bandit/](./bandit/), we implement the bandit experiments in the paper.
+In [`bandit/`](./bandit/), we implement the bandit experiments in the paper.
 
 
 ```bash
@@ -48,10 +50,13 @@ python plot_bandit_with_posterior.py --family gaussian # for Gaussian-Gaussian r
 
 
 ### RL Experiments
-In [`agents/`](./agents/), we implement the RL experiments in the paper.
-You can run the experiments by running files in [`sh/`](./sh/).
+In [`agents/`](./agents/), we implement the algorithms used in the paper.
+- [`minatar/`](./agents/minatar/): MinAtar experiments, based on [pgx](https://github.com/sotetsuk/pgx).
+- [`atari/`](./agents/atari/): Atari experiments.
+- [`craftax/`](./agents/craftax/): [Craftax](https://github.com/craftax/craftax) experiments.
 
-At `sh/`
+
+At [`sh/`](./sh/), run
 ```bash
 ./run_minatar.sh  # for MinAtar
 ./run_atari.sh  # for Atari

@@ -13,30 +13,30 @@
 \definecolor{softgray}{RGB}{70,70,70}
 
 \begin{document}
-\begin{varwidth}{26cm}
+\begin{varwidth}{30cm}
 
-\begin{center}
-{\Huge\bfseries RL vs.\ ReMax}
-\end{center}
+\noindent
+{\Huge\bfseries Standard RL\strut}
 
-\vspace{0.8em}
+\vspace{1.3em}
 
-\vspace{1.2em}
-
-\[
-\begin{array}{c@{\hspace{3em}}c@{\hspace{3em}}c}
-\text{\Large\bfseries Standard RL}
-&
-&
-\text{\Large\bfseries ReMax}
-\\[1.0em]
+{\fontsize{28}{34}\selectfont
+\noindent$
 \displaystyle
 J_{\mathrm{RL}}(\pi)
 =
-\mathbb{E}_{A\sim\pi}[\mathcal{R}(a)]
-&
-\text{\Large\color{softgray}$\Longrightarrow$}
-&
+\mathbb{E}_{a\sim\pi}[\mathcal{R}(a)]
+$
+}
+
+\vspace{2.8em}
+
+{\Huge\bfseries ReMax\strut}
+
+\vspace{0.2em}
+
+{\fontsize{28}{34}\selectfont
+\noindent$
 \displaystyle
 J_{\mathrm{ReMax}}^M(\pi)
 =
@@ -47,8 +47,8 @@ J_{\mathrm{ReMax}}^M(\pi)
 \textcolor{softblue}{\max_{m\in[M]}} \mathcal{R}(a_m)
 \right]
 \right]
-\end{array}
-\]
+$
+}
 
 \end{varwidth}
 \end{document}
