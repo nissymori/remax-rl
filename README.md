@@ -1,3 +1,5 @@
+[![arXiv](https://img.shields.io/badge/arXiv-2606.00151-b31b1b.svg)](https://arxiv.org/abs/2606.00151)
+
 # ReMax RL
 
 This is the official implementation of the paper Emergence of Exploration in Policy Gradient Reinforcement Learning via Retrying.
