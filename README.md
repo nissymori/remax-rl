@@ -67,9 +67,9 @@ At [`sh/`](./sh/), run
 ```
 
 ## See Also
-- [ReMAC](https://github.com/nissymori/ReMAC): ReMax in continuous action spaces.
-- [MaxPO](https://arxiv.org/abs/2606.06080): Sophisticated baseline for Expected Improvement.
-- [OrderGrad](https://github.com/paavo5/ordergrad): Generalization of ReMax to **Any** order statistics.
+- [ReMAC](https://github.com/nissymori/ReMAC): ReMax in continuous action spaces. [code](https://github.com/nissymori/ReMAC), [paper](https://arxiv.org/abs/2606.05888).
+- [MaxPO](https://arxiv.org/abs/2606.06080): Sophisticated baseline for Expected Improvement. [paper](https://arxiv.org/abs/2606.06080).
+- [OrderGrad](https://github.com/paavo5/ordergrad): Generalization of ReMax to **Any** order statistics. [library](https://github.com/paavo5/ordergrad), [paper](https://arxiv.org/abs/2606.06096)
 
 
 ## Cite us
