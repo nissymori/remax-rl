@@ -75,10 +75,10 @@ At [`sh/`](./sh/), run
 ## Cite us
 ```bibtex
 @inproceedings{nishimori2026emergence,
-title={Emergence of Exploration in Policy Gradient Reinforcement Learning via Retrying},
-author={Soichiro Nishimori and Paavo Parmas and Sotetsu Koyamada and Tadashi Kozuno and Toshinori Kitamura and Shin Ishii and Yutaka Matsuo},
-booktitle={Forty-third International Conference on Machine Learning},
-year={2026},
-url={https://openreview.net/forum?id=NpvBAOc87E}
+    title={Emergence of Exploration in Policy Gradient Reinforcement Learning via Retrying},
+    author={Soichiro Nishimori and Paavo Parmas and Sotetsu Koyamada and Tadashi Kozuno and Toshinori Kitamura and Shin Ishii and Yutaka Matsuo},
+    booktitle={Forty-third International Conference on Machine Learning},
+    year={2026},
+    url={https://openreview.net/forum?id=NpvBAOc87E}
 }
 ```
