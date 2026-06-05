@@ -65,3 +65,14 @@ At [`sh/`](./sh/), run
 ./run_atari.sh  # for Atari
 ./run_craftax.sh  # for Craftax
 ```
+
+## See Also
+- [ReMAC](https://github.com/nissymori/ReMAC): ReMax in continuous action spaces.
+- [MaxPO](https://arxiv.org/abs/2606.06080): Sophisticated baseline for Expected Improvement.
+- [OrderGrad](https://github.com/paavo5/ordergrad): Generalization of ReMax to **Any** order statistics.
+
+
+## Cite us
+```
+
+```
