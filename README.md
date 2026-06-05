@@ -66,10 +66,13 @@ At [`sh/`](./sh/), run
 ./run_craftax.sh  # for Craftax
 ```
 
-## See Also
-- [ReMAC](https://github.com/nissymori/ReMAC): ReMax in continuous action spaces. [code](https://github.com/nissymori/ReMAC), [paper](https://arxiv.org/abs/2606.05888).
-- [MaxPO](https://arxiv.org/abs/2606.06080): Sophisticated baseline for Expected Improvement. [paper](https://arxiv.org/abs/2606.06080).
-- [OrderGrad](https://github.com/paavo5/ordergrad): Generalization of ReMax to **Any** order statistics. [library](https://github.com/paavo5/ordergrad), [paper](https://arxiv.org/abs/2606.06096)
+## Related Work and Extensions
+- [Retry Policy Gradients in Continuous Action Spaces](https://arxiv.org/abs/2606.05888)
+    - ReMax in continuous action spaces. [code](https://github.com/nissymori/ReMAC)
+- [On Advantage Estimates for Max@K Policy Gradients](https://arxiv.org/abs/2606.06080)
+    - Sophisticated baseline for sample-based PG for (deterministic)ReMax. 
+- [OrderGrad: Optimizing Beyond the Mean with Order-Statistic Policy Gradient Estimation](https://arxiv.org/abs/2606.06096)
+    - Generalization of ReMax to Any order statistics. [library](https://github.com/paavo5/ordergrad)
 
 
 ## Cite us
