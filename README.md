@@ -1,5 +1,8 @@
 
-# ReMax RL (ICML2026)
+# Emergence of Exploration in Policy Gradient Reinforcement Learning via Retrying
+
+Soichiro Nishimori, Paavo Parmas, Sotetsu Koyamada, Tadashi Kozuno, Toshinori Kitamura, Shin Ishii, Yutaka Matsuo
+
 [![arXiv](https://img.shields.io/badge/arXiv-2606.00151-b31b1b.svg)](https://arxiv.org/abs/2606.00151)
 
 
