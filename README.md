@@ -79,6 +79,10 @@ At [`sh/`](./sh/), run
 
 ## Contributions
 
+- [Soichiro Nishimori](https://nissymori.github.io/): implementation, experiments, writing 
+- [Paavo Parmas](https://paavo5.github.io/): conceptualization, key mathematical derivations and proposals
+
+See paper for full contributions.
 
 ## Cite us
 ```bibtex
