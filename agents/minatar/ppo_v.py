@@ -45,6 +45,7 @@ class PPOConfig(BaseModel):
     ent_coef: float = 0.01
     vf_coef: float = 0.5
     max_grad_norm: float = 0.5
+    use_wandb: bool = False # use wandb
     wandb_project: str = "project-name"
     algo: str = "ppo_v"
     save_model: bool = False
@@ -207,7 +208,8 @@ def make_update_fn():
 
                     # CALCULATE ACTOR LOSS
                     ratio = jnp.exp(log_prob - traj_batch.log_prob)
-                    gae = (gae - gae.mean()) / (gae.std() + 1e-8)
+                    adv_mean, adv_std = gae.mean(), gae.std()
+                    gae = (gae - adv_mean) / (adv_std + 1e-8)
                     loss_actor1 = ratio * gae
                     loss_actor2 = (
                         jnp.clip(
@@ -220,20 +222,31 @@ def make_update_fn():
                     loss_actor = -jnp.minimum(loss_actor1, loss_actor2)
                     loss_actor = loss_actor.mean()
                     entropy = pi.entropy().mean()
+                    approx_kl = jnp.mean(traj_batch.log_prob - log_prob)
+                    clipfrac = jnp.mean(jnp.abs(ratio - 1.0) > args.clip_eps)
 
                     total_loss = (
                         loss_actor
                         + args.vf_coef * value_loss
                         - args.ent_coef * entropy
                     )
-                    return total_loss, (value_loss, loss_actor, entropy)
+                    aux = {
+                        "value_loss": value_loss,
+                        "loss_actor": loss_actor,
+                        "advantage": adv_mean,
+                        "advantage_std": adv_std,
+                        "entropy": entropy,
+                        "approx_kl": approx_kl,
+                        "clipfrac": clipfrac,
+                    }
+                    return total_loss, aux
 
                 grad_fn = jax.value_and_grad(_loss_fn, has_aux=True)
-                total_loss, grads = grad_fn(
+                (total_loss, aux), grads = grad_fn(
                     params, traj_batch, advantages, targets)
                 updates, opt_state = optimizer.update(grads, opt_state)
                 params = optax.apply_updates(params, updates)
-                return (params, opt_state), total_loss
+                return (params, opt_state), (total_loss, aux)
 
             params, opt_state, traj_batch, advantages, targets, rng = update_state
             rng, _rng = jax.random.split(rng)
@@ -255,12 +268,12 @@ def make_update_fn():
                 ),
                 shuffled_batch,
             )
-            (params, opt_state),  total_loss = jax.lax.scan(
+            (params, opt_state), (total_loss, aux) = jax.lax.scan(
                 _update_minbatch, (params, opt_state), minibatches
             )
             update_state = (params, opt_state, traj_batch,
                             advantages, targets, rng)
-            return update_state, total_loss
+            return update_state, (total_loss, aux)
 
         update_state = (params, opt_state, traj_batch,
                         advantages, targets, rng)
@@ -332,30 +345,49 @@ def train(rng):
         eval_R = evaluate(runner_state[0], _rng)
         log = {f"{args.env_name}/eval_R": float(eval_R), "steps": steps}
         print(log)
-        wandb.log(log)
+        if args.use_wandb:
+            wandb.log(log)
 
     st = time.time()
     for i in range(num_updates):
         runner_state, loss_info = jitted_update_step(runner_state)
         steps += args.num_envs * args.num_steps
+        total_loss, aux = loss_info
+        log = {
+            "steps": steps,
+            "total_loss": float(total_loss.mean()),
+            "value_loss": float(aux["value_loss"].mean()),
+            "loss_actor": float(aux["loss_actor"].mean()),
+            "advantage": float(aux["advantage"].mean()),
+            "advantage_std": float(aux["advantage_std"].mean()),
+            "entropy": float(aux["entropy"].mean()),
+            "approx_kl": float(aux["approx_kl"].mean()),
+            "clipfrac": float(aux["clipfrac"].mean()),
+        }
+        if args.use_wandb:
+            wandb.log(log)
         rng, _rng = jax.random.split(rng)
         if args.do_eval and steps % 10 == 0:
             eval_R = evaluate(runner_state[0], _rng)
-            log = {f"{args.env_name}/eval_R": float(eval_R), "steps": steps}
+            log = {f"{args.env_name}/eval_R": float(eval_R), "steps": steps, **log}
             print(log)
-            wandb.log(log)
+            if args.use_wandb:
+                wandb.log(log)
     et = time.time()
-    wandb.log({"train_time": et - st})
+    if args.use_wandb:
+        wandb.log({"train_time": et - st})
     rng, _rng = jax.random.split(rng)
     eval_R = evaluate(runner_state[0], _rng)
-    log = {f"{args.env_name}/eval_R": float(eval_R), "steps": steps, f"{args.env_name}/final_eval_R": float(eval_R)}
+    log = {**log, f"{args.env_name}/eval_R": float(eval_R), "steps": steps, f"{args.env_name}/final_eval_R": float(eval_R)}
     print(log)
-    wandb.log(log)
+    if args.use_wandb:
+        wandb.log(log)
     return runner_state
 
 
 if __name__ == "__main__":
-    wandb.init(project=args.wandb_project, config=args.dict())
+    if args.use_wandb:
+        wandb.init(project=args.wandb_project, config=args.dict())
     rng = jax.random.PRNGKey(args.seed)
     out = train(rng)
     if args.save_model:

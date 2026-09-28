@@ -475,7 +475,8 @@ def train(rng, args):
                 wandb.log(log)
 
     et = time.time()
-    wandb.log({"train_time": et - st})
+    if args.use_wandb:
+        wandb.log({"train_time": et - st})
 
     rng, _rng = jax.random.split(rng)
     eval_R = evaluate(runner_state[0], _rng)
